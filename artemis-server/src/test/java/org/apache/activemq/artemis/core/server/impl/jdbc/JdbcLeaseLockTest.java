@@ -17,7 +17,11 @@
 
 package org.apache.activemq.artemis.core.server.impl.jdbc;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -32,9 +36,13 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameter;
 
 import static org.apache.activemq.artemis.jdbc.store.sql.PropertySQLProvider.Factory.SQLDialect.DERBY;
 
+@RunWith(Parameterized.class)
 public class JdbcLeaseLockTest {
 
    private static final long DEFAULT_LOCK_EXPIRATION_MILLIS = TimeUnit.SECONDS.toMillis(10);
@@ -43,6 +51,20 @@ public class JdbcLeaseLockTest {
    private static final String DRIVER_CLASS_NAME = "org.apache.derby.jdbc.EmbeddedDriver";
    private JdbcSharedStateManager jdbcSharedStateManager;
 
+   @Parameterized.Parameters
+   public static List<Object[]> data() {
+       return Arrays.asList(new Object[][] {
+          { true, null },
+          { false, null }
+       });
+   }
+   
+   @Parameter(0)
+   public boolean withExistingTable;
+   @Parameter(1)
+   public Object result;
+   
+   
    private LeaseLock lock() {
       return lock(DEFAULT_LOCK_EXPIRATION_MILLIS);
    }
@@ -56,7 +78,13 @@ public class JdbcLeaseLockTest {
    }
 
    @Before
-   public void createLockTable() {
+   public void createLockTable() throws Exception {
+      if (withExistingTable) {
+         try (Connection con = DriverManager.getConnection(JDBC_URL)) {
+            con.createStatement().execute(SQL_PROVIDER.createNodeManagerStoreTableSQL());
+         }
+      }
+      
       jdbcSharedStateManager = JdbcSharedStateManager.usingConnectionUrl(UUID.randomUUID().toString(), DEFAULT_LOCK_EXPIRATION_MILLIS, JDBC_URL, DRIVER_CLASS_NAME, SQL_PROVIDER);
    }
 
