@@ -174,9 +174,8 @@ public abstract class AbstractJDBCDriver {
       }
    }
 
-	private void createTableIfNotExists(String tableName, String... sqls)
-			throws SQLException {
-		logger.tracef("Validating if table %s didn't exist before creating", tableName);
+   private void createTableIfNotExists(String tableName, String... sqls) throws SQLException {
+      logger.tracef("Validating if table %s didn't exist before creating", tableName);
       try {
          connection.setAutoCommit(false);
          try (ResultSet rs = connection.getMetaData().getTables(null, null, tableName, null)) {
@@ -209,19 +208,19 @@ public abstract class AbstractJDBCDriver {
             }
          }
 
-			connection.commit();
-		} catch (SQLException e) {
-			final String sqlStatements = Stream.of(sqls).collect(Collectors.joining("\n"));
-			logger.error(JDBCUtils.appendSQLExceptionDetails(new StringBuilder(), e, sqlStatements));
-			try {
-				connection.rollback();
-			} catch (SQLException rollbackEx) {
-				logger.error(JDBCUtils.appendSQLExceptionDetails(new StringBuilder(), rollbackEx, sqlStatements));
-				throw rollbackEx;
-			}
-			throw e;
-		}
-	}
+         connection.commit();
+      } catch (SQLException e) {
+         final String sqlStatements = Stream.of(sqls).collect(Collectors.joining("\n"));
+         logger.error(JDBCUtils.appendSQLExceptionDetails(new StringBuilder(), e, sqlStatements));
+         try {
+            connection.rollback();
+         } catch (SQLException rollbackEx) {
+            logger.error(JDBCUtils.appendSQLExceptionDetails(new StringBuilder(), rollbackEx, sqlStatements));
+            throw rollbackEx;
+         }
+         throw e;
+      }
+   }
 
    private Driver getDriver(String className) {
       try {

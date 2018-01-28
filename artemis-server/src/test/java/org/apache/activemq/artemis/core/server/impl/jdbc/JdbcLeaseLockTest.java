@@ -51,20 +51,20 @@ public class JdbcLeaseLockTest {
    private static final String DRIVER_CLASS_NAME = "org.apache.derby.jdbc.EmbeddedDriver";
    private JdbcSharedStateManager jdbcSharedStateManager;
 
-   @Parameterized.Parameters
+   @Parameterized.Parameters(name = "create_tables_prior_test")
    public static List<Object[]> data() {
-       return Arrays.asList(new Object[][] {
-          { true, null },
-          { false, null }
-       });
+      return Arrays.asList(new Object[][] {
+         {true, null},
+         {false, null}
+      });
    }
-   
+
    @Parameter(0)
    public boolean withExistingTable;
    @Parameter(1)
    public Object result;
-   
-   
+
+
    private LeaseLock lock() {
       return lock(DEFAULT_LOCK_EXPIRATION_MILLIS);
    }
@@ -84,7 +84,7 @@ public class JdbcLeaseLockTest {
             con.createStatement().execute(SQL_PROVIDER.createNodeManagerStoreTableSQL());
          }
       }
-      
+
       jdbcSharedStateManager = JdbcSharedStateManager.usingConnectionUrl(UUID.randomUUID().toString(), DEFAULT_LOCK_EXPIRATION_MILLIS, JDBC_URL, DRIVER_CLASS_NAME, SQL_PROVIDER);
    }
 
