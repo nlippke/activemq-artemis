@@ -177,39 +177,37 @@ public abstract class AbstractJDBCDriver {
 	private void createTableIfNotExists(String tableName, String... sqls)
 			throws SQLException {
 		logger.tracef("Validating if table %s didn't exist before creating", tableName);
-		try {
-			connection.setAutoCommit(false);
-			try (ResultSet rs = connection.getMetaData().getTables(null, null, tableName, null)) {
-				if (rs != null && !rs.next()) {
-					if (logger.isTraceEnabled()) {
-						logger.tracef("Table %s did not exist, creating it with SQL=%s", tableName,
-								Arrays.toString(sqls));
-					}
-					final SQLWarning sqlWarning = rs.getWarnings();
-					if (sqlWarning != null) {
-						logger.warn(JDBCUtils.appendSQLExceptionDetails(new StringBuilder(), sqlWarning));
-					}
-				} else {
-					try (Statement statement = connection.createStatement();
-							ResultSet cntRs = statement.executeQuery(sqlProvider.getCountJournalRecordsSQL())) {
-						if (rs.next() && rs.getInt(1) > 0) {
-							logger.tracef("Table %s did exist but is not empty. Skipping initialization.", tableName);
-						} else {
-							sqls = Arrays.copyOfRange(sqls, 1, sqls.length);
-						}
-					}
-				}
-				try (Statement statement = connection.createStatement()) {
-					for (String sql : sqls) {
-						statement.executeUpdate(sql);
-						final SQLWarning statementSqlWarning = statement.getWarnings();
-						if (statementSqlWarning != null) {
-							logger.warn(
-									JDBCUtils.appendSQLExceptionDetails(new StringBuilder(), statementSqlWarning, sql));
-						}
-					}
-				}
-			}
+      try {
+         connection.setAutoCommit(false);
+         try (ResultSet rs = connection.getMetaData().getTables(null, null, tableName, null)) {
+            if (rs != null && !rs.next()) {
+               if (logger.isTraceEnabled()) {
+                  logger.tracef("Table %s did not exist, creating it with SQL=%s", tableName, Arrays.toString(sqls));
+               }
+               final SQLWarning sqlWarning = rs.getWarnings();
+               if (sqlWarning != null) {
+                  logger.warn(JDBCUtils.appendSQLExceptionDetails(new StringBuilder(), sqlWarning));
+               }
+            } else {
+               try (Statement statement = connection.createStatement();
+                     ResultSet cntRs = statement.executeQuery(sqlProvider.getCountJournalRecordsSQL())) {
+                  if (rs.next() && rs.getInt(1) > 0) {
+                     logger.tracef("Table %s did exist but is not empty. Skipping initialization.", tableName);
+                  } else {
+                     sqls = Arrays.copyOfRange(sqls, 1, sqls.length);
+                  }
+               }
+            }
+            try (Statement statement = connection.createStatement()) {
+               for (String sql : sqls) {
+                  statement.executeUpdate(sql);
+                  final SQLWarning statementSqlWarning = statement.getWarnings();
+                  if (statementSqlWarning != null) {
+                     logger.warn(JDBCUtils.appendSQLExceptionDetails(new StringBuilder(), statementSqlWarning, sql));
+                  }
+               }
+            }
+         }
 
 			connection.commit();
 		} catch (SQLException e) {
